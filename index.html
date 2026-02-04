@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Subscription Tracker</h1>
+            <p class="subtitle">Track and manage your subscriptions</p>
+        </header>
+
+        <main>
+            <!-- Collapsible Tabbed Section for Form and Upload -->
+            <section class="collapsible-section" aria-labelledby="collapsible-heading">
+                <div class="collapsible-header">
+                    <h2 id="collapsible-heading">Add or Import Subscriptions</h2>
+                    <button 
+                        id="toggleCollapse" 
+                        class="collapse-toggle" 
+                        aria-expanded="true"
+                        aria-controls="collapsible-content"
+                        type="button"
+                    >
+                        <span class="collapse-icon">−</span>
+                    </button>
+                </div>
+
+                <div id="collapsible-content" class="collapsible-content">
+                    <!-- Tabs -->
+                    <div class="tabs-container">
+                        <div class="tabs-header">
+                            <button 
+                                class="tab-button active" 
+                                data-tab="add-form"
+                                aria-selected="true"
+                                aria-controls="add-form-panel"
+                            >
+                                Add New Subscription
+                            </button>
+                            <button 
+                                class="tab-button" 
+                                data-tab="import-file"
+                                aria-selected="false"
+                                aria-controls="import-file-panel"
+                            >
+                                Import Subscriptions
+                            </button>
+                        </div>
+
+                        <!-- Add Subscription Form Tab -->
+                        <div 
+                            id="add-form-panel" 
+                            class="tab-panel active" 
+                            role="tabpanel" 
+                            aria-labelledby="add-form-tab"
+                        >
+                            <form id="subscriptionForm" novalidate>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="name">Name <span aria-label="required">*</span></label>
+                                        <input 
+                                            type="text" 
+                                            id="name" 
+                                            name="name" 
+                                            placeholder="e.g., Netflix" 
+                                            required
+                                            aria-required="true"
+                                        >
+                                        <span class="error-message" id="name-error" role="alert"></span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="cost">Cost <span aria-label="required">*</span></label>
+                                        <input 
+                                            type="number" 
+                                            id="cost" 
+                                            name="cost" 
+                                            placeholder="e.g., 9.99" 
+                                            step="0.01" 
+                                            min="0"
+                                            required
+                                            aria-required="true"
+                                        >
+                                        <span class="error-message" id="cost-error" role="alert"></span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="frequency">Billing Frequency <span aria-label="required">*</span></label>
+                                        <input 
+                                            type="text" 
+                                            id="frequency" 
+                                            name="frequency" 
+                                            placeholder="Select frequency"
+                                            list="frequencies"
+                                            required
+                                            aria-required="true"
+                                        >
+                                        <datalist id="frequencies">
+                                            <option value="Weekly"></option>
+                                            <option value="Monthly"></option>
+                                            <option value="Quarterly"></option>
+                                            <option value="Semi-Annually"></option>
+                                            <option value="Annually"></option>
+                                        </datalist>
+                                        <span class="error-message" id="frequency-error" role="alert"></span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="category">Category</label>
+                                        <input 
+                                            type="text" 
+                                            id="category" 
+                                            name="category" 
+                                            placeholder="e.g., Entertainment"
+                                            list="categories"
+                                        >
+                                        <datalist id="categories"></datalist>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="nextBillingDate">Next Billing Date</label>
+                                        <input 
+                                            type="date" 
+                                            id="nextBillingDate" 
+                                            name="nextBillingDate"
+                                        >
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="notes">Notes</label>
+                                        <textarea 
+                                            id="notes" 
+                                            name="notes" 
+                                            placeholder="e.g., Shared with family, auto-renews"
+                                            rows="2"
+                                        ></textarea>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Add Subscription</button>
+                            </form>
+                        </div>
+
+                        <!-- File Upload Tab -->
+                        <div 
+                            id="import-file-panel" 
+                            class="tab-panel" 
+                            role="tabpanel" 
+                            aria-labelledby="import-file-tab"
+                        >
+                            <div class="upload-container">
+                                <label for="fileUpload" class="file-label">
+                                    <span class="file-text">Choose CSV, TXT, or XLS file</span>
+                                    <input 
+                                        type="file" 
+                                        id="fileUpload" 
+                                        accept=".csv,.txt,.xls,.xlsx"
+                                        aria-label="Upload subscriptions file"
+                                    >
+                                </label>
+                                <p class="upload-help">CSV format: Name,Cost,Frequency,Category,NextBillingDate,Notes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Savings Summary -->
+            <section class="summary-section" aria-labelledby="summary-heading">
+                <h2 id="summary-heading">Savings Summary</h2>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <p class="summary-label">Monthly Savings</p>
+                        <p class="summary-value" id="monthlySavings">$0.00</p>
+                    </div>
+                    <div class="summary-card">
+                        <p class="summary-label">Annual Savings</p>
+                        <p class="summary-value" id="annualSavings">$0.00</p>
+                    </div>
+                    <div class="summary-card">
+                        <p class="summary-label">Total Monthly Cost</p>
+                        <p class="summary-value" id="totalMonthlyCost">$0.00</p>
+                    </div>
+                    <div class="summary-card">
+                        <p class="summary-label">Total Annual Cost</p>
+                        <p class="summary-value" id="totalAnnualCost">$0.00</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Subscriptions Table -->
+            <section class="table-section" aria-labelledby="subscriptions-heading">
+                <h2 id="subscriptions-heading">Your Subscriptions</h2>
+                <div class="table-wrapper">
+                    <table id="subscriptionsTable" role="grid">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Cost</th>
+                                <th scope="col">Frequency</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Next Billing</th>
+                                <th scope="col">Notes</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr class="empty-row">
+                                <td colspan="7" class="empty-message">No subscriptions yet. Add one to get started!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Subscription Tracker. Your data is saved locally in your browser.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
