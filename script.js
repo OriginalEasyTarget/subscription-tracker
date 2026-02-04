@@ -402,7 +402,7 @@ class SubscriptionTracker {
             errors.name = 'Name is required';
         }
 
-        if (!cost || isNaN(cost) || cost < 0) {
+        if (isNaN(cost) || cost === '' || cost === null || cost < 0) {
             errors.cost = 'Cost must be a valid number';
         }
 
