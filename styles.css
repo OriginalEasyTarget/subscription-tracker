@@ -262,6 +262,17 @@ footer {
     color: var(--gray-900);
 }
 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-header h2 {
+    margin: 0;
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

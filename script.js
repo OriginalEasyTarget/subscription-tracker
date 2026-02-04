@@ -33,6 +33,10 @@ class SubscriptionTracker {
         const fileUpload = document.getElementById('fileUpload');
         fileUpload.addEventListener('change', (e) => this.handleFileUpload(e));
 
+        // Bind download button
+        const downloadBtn = document.getElementById('downloadBtn');
+        downloadBtn.addEventListener('click', () => this.downloadSubscriptionsCSV());
+
         // Set up header click handlers for sorting
         this.setupHeaderClickHandlers();
 
@@ -352,6 +356,52 @@ class SubscriptionTracker {
         }
 
         return subscriptions;
+    }
+
+    downloadSubscriptionsCSV() {
+        if (this.subscriptions.length === 0) {
+            alert('No subscriptions to download.');
+            return;
+        }
+
+        // Create CSV content
+        const headers = ['Name', 'Cost', 'Frequency', 'Category', 'NextBillingDate', 'Notes'];
+        const rows = this.subscriptions.map(sub => [
+            this.escapeCSV(sub.name),
+            sub.cost,
+            sub.frequency,
+            this.escapeCSV(sub.category),
+            sub.nextBillingDate,
+            this.escapeCSV(sub.notes)
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'subscriptions.csv');
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    escapeCSV(value) {
+        if (!value) return '';
+        // Escape quotes and wrap in quotes if contains comma, newline, or quotes
+        const stringValue = String(value);
+        if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
+            return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
     }
 
     // ===================================
