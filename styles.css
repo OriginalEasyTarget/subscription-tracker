@@ -18,6 +18,7 @@
     --success-hover: #059669;
     --warning: #f59e0b;
     --danger: #ef4444;
+    --danger-light: #fee2e2;
     
     /* Grays */
     --gray-50: #f9fafb;
@@ -628,6 +629,37 @@ input[type="checkbox"] {
     margin-right: var(--spacing-sm);
 }
 
+.flag-checkbox {
+    margin: 0;
+    cursor: pointer;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--font-size-lg);
+    color: var(--primary);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s, color 0.2s;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.btn-icon:focus {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
 input[type="checkbox"]:focus {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
@@ -802,4 +834,138 @@ input[type="checkbox"]:focus {
 :focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
+}
+
+/* ===================================
+   Modal Styles
+   =================================== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xl);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.modal-header h3 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    margin: 0;
+    color: var(--gray-900);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--gray-500);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.modal-close:hover {
+    background-color: var(--gray-100);
+    color: var(--gray-900);
+}
+
+.modal-body {
+    padding: var(--spacing-xl);
+    flex: 1;
+    overflow-y: auto;
+}
+
+.notes-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: var(--spacing-md);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.notes-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-focus);
+}
+
+.modal-footer {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    padding: var(--spacing-xl);
+    border-top: 1px solid var(--gray-200);
+}
+
+.modal-footer .btn {
+    flex: 0 1 auto;
+}
+
+/* ===================================
+   Center-Aligned Columns
+   =================================== */
+.notes-cell,
+.flag-cell,
+.delete-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.notes-cell:hover,
+.flag-cell:hover,
+.delete-cell:hover {
+    background-color: var(--primary-light);
+    transition: background-color 0.2s;
+}
+
+.notes-btn,
+.delete-btn {
+    display: block;
+    margin: 0 auto;
+}
+
+.notes-btn {
+    font-size: 1.25rem;
 }

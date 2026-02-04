@@ -215,7 +215,8 @@
                                 <th scope="col">Category</th>
                                 <th scope="col">Next Billing</th>
                                 <th scope="col">Notes</th>
-                                <th scope="col">Actions</th>
+                                <th scope="col">Flag</th>
+                                <th scope="col">Delete</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
@@ -231,6 +232,27 @@
         <footer>
             <p>&copy; 2026 Subscription Tracker. Your data is saved locally in your browser.</p>
         </footer>
+    </div>
+
+    <!-- Notes Modal -->
+    <div id="notesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Notes</h3>
+                <button class="modal-close" onclick="tracker.closeNotesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea 
+                    id="notesInput" 
+                    class="notes-textarea"
+                    placeholder="Enter notes here..."
+                ></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="tracker.closeNotesModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="tracker.saveNotes()">OK</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

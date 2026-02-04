@@ -6,8 +6,9 @@ class SubscriptionTracker {
     constructor() {
         this.subscriptions = [];
         this.storageKey = 'subscriptions';
-        this.sortColumn = null;
+        this.sortColumn = 'name';
         this.sortAscending = true;
+        this.currentEditingSubscriptionId = null;
         this.init();
     }
 
@@ -42,6 +43,13 @@ class SubscriptionTracker {
 
         // Set up collapsible section and tabs
         this.setupCollapsibleSection();
+
+        // Set up modal escape key handler
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeNotesModal();
+            }
+        });
 
         // Initial render
         this.render();
@@ -123,6 +131,45 @@ class SubscriptionTracker {
         if (panel) {
             panel.classList.add('active');
         }
+    }
+
+    // ===================================
+    // Notes Modal
+    // ===================================
+
+    openNotesModal(subscriptionId) {
+        const subscription = this.subscriptions.find((s) => s.id === subscriptionId);
+        if (!subscription) return;
+
+        this.currentEditingSubscriptionId = subscriptionId;
+        const notesInput = document.getElementById('notesInput');
+        notesInput.value = subscription.notes || '';
+        
+        const modal = document.getElementById('notesModal');
+        modal.classList.add('show');
+        notesInput.focus();
+    }
+
+    closeNotesModal() {
+        const modal = document.getElementById('notesModal');
+        modal.classList.remove('show');
+        this.currentEditingSubscriptionId = null;
+    }
+
+    saveNotes() {
+        if (this.currentEditingSubscriptionId === null) return;
+
+        const subscription = this.subscriptions.find((s) => s.id === this.currentEditingSubscriptionId);
+        if (!subscription) return;
+
+        const notesInput = document.getElementById('notesInput');
+        subscription.notes = notesInput.value.trim();
+
+        this.saveToStorage();
+        this.render();
+        this.closeNotesModal();
+
+        this.announce(`Notes updated for ${subscription.name}`);
     }
 
     // ===================================
@@ -537,7 +584,7 @@ class SubscriptionTracker {
 
         if (this.subscriptions.length === 0) {
             tableBody.innerHTML =
-                '<tr class="empty-row"><td colspan="7" class="empty-message">No subscriptions yet. Add one to get started!</td></tr>';
+                '<tr class="empty-row"><td colspan="8" class="empty-message">No subscriptions yet. Add one to get started!</td></tr>';
             return;
         }
 
@@ -555,6 +602,14 @@ class SubscriptionTracker {
         tableBody.querySelectorAll('td[data-editable]').forEach((cell) => {
             cell.addEventListener('click', (e) => this.handleCellClick(e));
         });
+
+        // Add change handlers to flag checkboxes
+        tableBody.querySelectorAll('.flag-checkbox').forEach((checkbox) => {
+            checkbox.addEventListener('change', (e) => {
+                const subscriptionId = parseInt(e.target.dataset.id);
+                this.toggleFlag(subscriptionId);
+            });
+        });
         
         // Update table headers with sort indicators (without re-adding listeners)
         this.updateTableHeaders();
@@ -562,7 +617,7 @@ class SubscriptionTracker {
 
     updateTableHeaders() {
         // Set up headers with sort indicators
-        const columns = ['name', 'cost', 'frequency', 'category', 'nextBillingDate', 'notes', 'actions'];
+        const columns = ['name', 'cost', 'frequency', 'category', 'nextBillingDate', 'notes', 'flag', 'delete'];
         
         document.querySelectorAll('thead th').forEach((header, index) => {
             const column = columns[index];
@@ -575,7 +630,7 @@ class SubscriptionTracker {
             // Restore original text and clear indicators
             header.textContent = header.dataset.originalText;
             
-            if (column !== 'actions') {
+            if (column !== 'flag' && column !== 'delete') {
                 header.style.cursor = 'pointer';
                 
                 // Add visual indicator for current sort
@@ -590,12 +645,12 @@ class SubscriptionTracker {
     setupHeaderClickHandlers() {
         // Set up click handlers for table headers for sorting
         // This is done once during init to avoid adding multiple listeners
-        const columns = ['name', 'cost', 'frequency', 'category', 'nextBillingDate', 'notes', 'actions'];
+        const columns = ['name', 'cost', 'frequency', 'category', 'nextBillingDate', 'notes', 'flag', 'delete'];
         
         document.querySelectorAll('thead th').forEach((header, index) => {
             const column = columns[index];
             
-            if (column !== 'actions') {
+            if (column !== 'flag' && column !== 'delete') {
                 header.addEventListener('click', () => this.handleHeaderClick(index));
             }
         });
@@ -619,6 +674,8 @@ class SubscriptionTracker {
             ? new Date(sub.nextBillingDate).toLocaleDateString()
             : '—';
         const costDisplayFrequency = this.getFrequencyShortForm(sub.frequency);
+        const notesIcon = sub.notes ? '📄' : '+';
+        const notesTitle = sub.notes ? 'View notes' : 'Add notes';
 
         return `
             <tr class="${sub.flagged ? 'flagged' : ''}" data-id="${sub.id}">
@@ -631,25 +688,34 @@ class SubscriptionTracker {
                 <td data-editable="frequency" data-type="select" title="Click to edit">${frequencyLabel}</td>
                 <td data-editable="category" data-type="text" title="Click to edit">${sub.category ? this.escapeHtml(sub.category) : '—'}</td>
                 <td data-editable="nextBillingDate" data-type="date" title="Click to edit">${nextBillingFormatted}</td>
-                <td data-editable="notes" data-type="text" title="Click to edit">${sub.notes ? this.escapeHtml(sub.notes) : '—'}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button
-                            class="btn btn-secondary btn-small"
-                            onclick="tracker.toggleFlag(${sub.id})"
-                            title="${sub.flagged ? 'Unmark for cancellation' : 'Mark for cancellation'}"
-                            aria-pressed="${sub.flagged}"
-                        >
-                            ${sub.flagged ? '✓ Flagged' : 'Flag'}
-                        </button>
-                        <button
-                            class="btn btn-danger btn-small"
-                            onclick="tracker.deleteSubscription(${sub.id})"
-                            title="Delete subscription"
-                        >
-                            Delete
-                        </button>
-                    </div>
+                <td class="notes-cell">
+                    <button
+                        class="btn-icon notes-btn"
+                        onclick="tracker.openNotesModal(${sub.id})"
+                        title="${notesTitle}"
+                        aria-label="${notesTitle} for ${this.escapeHtml(sub.name)}"
+                    >
+                        ${notesIcon}
+                    </button>
+                </td>
+                <td class="flag-cell">
+                    <input
+                        type="checkbox"
+                        class="flag-checkbox"
+                        data-id="${sub.id}"
+                        ${sub.flagged ? 'checked' : ''}
+                        title="${sub.flagged ? 'Unmark for cancellation' : 'Mark for cancellation'}"
+                    />
+                </td>
+                <td class="delete-cell">
+                    <button
+                        class="btn-icon delete-btn"
+                        onclick="tracker.deleteSubscription(${sub.id})"
+                        title="Delete subscription"
+                        aria-label="Delete ${this.escapeHtml(sub.name)}"
+                    >
+                        🗑
+                    </button>
                 </td>
             </tr>
         `;
