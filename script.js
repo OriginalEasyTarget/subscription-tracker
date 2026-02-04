@@ -522,6 +522,14 @@ class SubscriptionTracker {
         document.getElementById('totalAnnualCost').textContent = this.formatCurrency(
             totalAnnualCost
         );
+
+        // Update subscription count
+        const countElement = document.getElementById('subscriptionCount');
+        if (this.subscriptions.length > 0) {
+            countElement.textContent = `(${this.subscriptions.length})`;
+        } else {
+            countElement.textContent = '';
+        }
     }
 
     updateTable() {

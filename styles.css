@@ -273,6 +273,19 @@ footer {
     margin: 0;
 }
 
+.table-help-text {
+    margin: 0 0 var(--spacing-lg) 0;
+    color: var(--gray-600);
+    font-size: var(--font-size-sm);
+    font-style: italic;
+}
+
+#subscriptionCount {
+    font-size: var(--font-size-lg);
+    font-weight: 400;
+    color: var(--gray-600);
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
