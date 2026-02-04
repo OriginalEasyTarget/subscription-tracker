@@ -764,7 +764,7 @@ class SubscriptionTracker {
         const monthlyCost = this.getMonthlyAmount(sub.cost, sub.frequency);
         const frequencyLabel = this.formatFrequency(sub.frequency);
         const nextBillingFormatted = sub.nextBillingDate
-            ? new Date(sub.nextBillingDate).toLocaleDateString()
+            ? this.formatDateDisplay(sub.nextBillingDate)
             : '—';
         const costDisplayFrequency = this.getFrequencyShortForm(sub.frequency);
         const notesIcon = sub.notes ? '📄' : '+';
@@ -886,12 +886,22 @@ class SubscriptionTracker {
             // The user can type or the browser will show the static datalist from HTML
             inputElement = document.createElement('input');
             inputElement.type = 'text';
-            inputElement.value = currentValue || '';
+            // Display the formatted (title case) version to the user
+            inputElement.value = this.formatFrequency(currentValue) || '';
             inputElement.setAttribute('list', 'frequencies');
         } else if (fieldType === 'date') {
+            // Use masked date input like the form (MM/DD/YYYY format)
             inputElement = document.createElement('input');
-            inputElement.type = 'date';
-            inputElement.value = currentValue || '';
+            inputElement.type = 'text';
+            inputElement.inputMode = 'numeric';
+            inputElement.placeholder = 'MM/DD/YYYY';
+            // Convert stored date format (YYYY-MM-DD) to display format (MM/DD/YYYY)
+            if (currentValue) {
+                const parts = currentValue.split('-');
+                if (parts.length === 3) {
+                    inputElement.value = `${parts[1]}/${parts[2]}/${parts[0]}`;
+                }
+            }
         } else if (fieldType === 'number') {
             inputElement = document.createElement('input');
             inputElement.type = 'number';
@@ -910,6 +920,24 @@ class SubscriptionTracker {
             const newValue = inputElement.value.trim();
 
             if (newValue !== String(currentValue || '')) {
+                // For date fields, validate before updating
+                if (fieldType === 'date') {
+                    const validation = this.validateDateInput(newValue);
+                    if (!validation.valid) {
+                        alert(validation.message);
+                        cell.innerHTML = originalContent;
+                        return;
+                    }
+                }
+                // For cost fields, validate they are numeric and >= 0
+                if (fieldType === 'number') {
+                    const numValue = parseFloat(newValue);
+                    if (isNaN(numValue) || numValue < 0) {
+                        alert('Cost must be a valid number (0 or greater)');
+                        cell.innerHTML = originalContent;
+                        return;
+                    }
+                }
                 this.updateFieldValue(subscriptionId, fieldName, newValue, fieldType);
             } else {
                 cell.innerHTML = originalContent;
@@ -944,7 +972,28 @@ class SubscriptionTracker {
         if (fieldType === 'number') {
             convertedValue = parseFloat(newValue) || 0;
         } else if (fieldType === 'date') {
-            convertedValue = newValue;
+            // Convert MM/DD/YYYY format to YYYY-MM-DD for storage
+            const rawDigits = newValue.replace(/\D/g, '');
+            let converted = rawDigits;
+            
+            // Auto-complete year if missing
+            if (rawDigits.length === 4) {
+                converted = rawDigits + '2026';
+            } else if (rawDigits.length === 6) {
+                const mmdd = rawDigits.substring(0, 4);
+                const yy = rawDigits.substring(4, 6);
+                converted = mmdd + '20' + yy;
+            }
+            
+            // Convert from MM/DD/YYYY digits to YYYY-MM-DD
+            if (converted.length === 8) {
+                const mm = converted.substring(0, 2);
+                const dd = converted.substring(2, 4);
+                const yyyy = converted.substring(4, 8);
+                convertedValue = `${yyyy}-${mm}-${dd}`;
+            } else {
+                convertedValue = newValue; // Keep as-is if can't parse
+            }
         } else if (fieldName === 'frequency') {
             // Normalize frequency to lowercase
             convertedValue = this.normalizeFrequency(newValue);
@@ -960,6 +1009,53 @@ class SubscriptionTracker {
         this.render();
 
         this.announce(`${fieldName} updated to ${newValue}`);
+    }
+
+    validateDateInput(dateString) {
+        // Remove non-digits
+        const digits = dateString.replace(/\D/g, '');
+        
+        if (digits.length === 0) {
+            return { valid: false, message: 'Date is required' };
+        }
+        
+        // Auto-complete year if needed
+        let completed = digits;
+        if (digits.length === 4) {
+            completed = digits + '2026';
+        } else if (digits.length === 6) {
+            const mmdd = digits.substring(0, 4);
+            const yy = digits.substring(4, 6);
+            completed = mmdd + '20' + yy;
+        } else if (digits.length !== 8) {
+            return { valid: false, message: 'Please enter date in MM/DD/YYYY format' };
+        }
+        
+        // Validate date
+        const month = parseInt(completed.substring(0, 2), 10);
+        const day = parseInt(completed.substring(2, 4), 10);
+        const year = parseInt(completed.substring(4, 8), 10);
+        
+        if (!this.isValidDate(month, day, year)) {
+            return { valid: false, message: 'Invalid date. Please enter a valid date.' };
+        }
+        
+        return { valid: true };
+    }
+
+    formatDateDisplay(dateString) {
+        // Convert YYYY-MM-DD format to MM/DD/YYYY with 2-digit formatting
+        if (!dateString) return '—';
+        
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+            const month = String(parts[1]).padStart(2, '0');
+            const day = String(parts[2]).padStart(2, '0');
+            const year = parts[0];
+            return `${month}/${day}/${year}`;
+        }
+        
+        return dateString;
     }
 
     formatFrequency(frequency) {
