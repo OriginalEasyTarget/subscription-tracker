@@ -30,6 +30,9 @@ class SubscriptionTracker {
         const frequencyInput = document.getElementById('frequency');
         frequencyInput.addEventListener('keydown', (e) => this.handleAutocompleteKeydown(e, 'frequencies'));
 
+        // Set up date input auto-advance
+        this.setupDateInputAutoAdvance();
+
         // Bind file upload
         const fileUpload = document.getElementById('fileUpload');
         fileUpload.addEventListener('change', (e) => this.handleFileUpload(e));
@@ -131,6 +134,96 @@ class SubscriptionTracker {
         if (panel) {
             panel.classList.add('active');
         }
+    }
+
+    // ===================================
+    // Date Input Auto-Advance
+    // ===================================
+
+    setupDateInputAutoAdvance() {
+        const dateInput = document.getElementById('nextBillingDate');
+        const errorSpan = document.getElementById('date-error');
+
+        dateInput.addEventListener('input', (e) => {
+            const rawValue = e.target.value.replace(/\D/g, ''); // Remove non-digits
+            const formatted = this.formatDateInput(rawValue);
+            e.target.value = formatted;
+            
+            // Clear error on input
+            errorSpan.textContent = '';
+            errorSpan.setAttribute('role', 'alert');
+        });
+
+        dateInput.addEventListener('blur', (e) => {
+            const value = e.target.value.replace(/\D/g, ''); // Get only digits
+            
+            if (value.length === 0) {
+                errorSpan.textContent = '';
+                return;
+            }
+
+            // Auto-complete year if missing (MM/DD only = MM/DD/2026)
+            let completed = value;
+            if (value.length === 4) {
+                completed = value + '2026'; // Auto-add current year
+            } else if (value.length === 6) {
+                // Expand 2-digit year to 4-digit year
+                const mmdd = value.substring(0, 4);
+                const yy = value.substring(4, 6);
+                completed = mmdd + '20' + yy;
+            }
+
+            // Validate date
+            const month = parseInt(completed.substring(0, 2), 10);
+            const day = parseInt(completed.substring(2, 4), 10);
+            const year = parseInt(completed.substring(4, 8), 10);
+
+            if (!this.isValidDate(month, day, year)) {
+                errorSpan.textContent = 'Invalid date. Please enter a valid date in MM/DD/YYYY format.';
+                e.target.value = completed.substring(0, 2) + '/' + completed.substring(2, 4) + '/' + completed.substring(4, 8);
+                return;
+            }
+
+            // Format and set the value
+            const formatted = this.formatDateInput(completed);
+            e.target.value = formatted;
+            errorSpan.textContent = '';
+        });
+    }
+
+    formatDateInput(rawInput) {
+        if (!rawInput || rawInput.length === 0) return '';
+        
+        const digits = rawInput.replace(/\D/g, ''); // Remove all non-digits
+        
+        if (digits.length <= 2) {
+            return digits;
+        } else if (digits.length <= 4) {
+            return digits.substring(0, 2) + '/' + digits.substring(2, 4);
+        } else {
+            return digits.substring(0, 2) + '/' + digits.substring(2, 4) + '/' + digits.substring(4, 8);
+        }
+    }
+
+    isValidDate(month, day, year) {
+        // Check month
+        if (month < 1 || month > 12) return false;
+        
+        // Check year (reasonable range)
+        if (year < 1900 || year > 2100) return false;
+        
+        // Days per month
+        const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        
+        // Check for leap year
+        if ((year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)) {
+            daysInMonth[1] = 29;
+        }
+        
+        // Check day
+        if (day < 1 || day > daysInMonth[month - 1]) return false;
+        
+        return true;
     }
 
     // ===================================

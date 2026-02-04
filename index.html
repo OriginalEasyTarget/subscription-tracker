@@ -124,10 +124,16 @@
                                     <div class="form-group">
                                         <label for="nextBillingDate">Next Billing Date</label>
                                         <input 
-                                            type="date" 
+                                            type="text" 
                                             id="nextBillingDate" 
                                             name="nextBillingDate"
+                                            placeholder="MM/DD/YYYY"
+                                            inputmode="numeric"
+                                            aria-label="Next Billing Date in MM/DD/YYYY format"
+                                            aria-describedby="date-format-hint"
                                         >
+                                        <span id="date-format-hint" class="sr-only">Enter date as MM/DD/YYYY. Year can be 2 or 4 digits. If omitted, current year will be used.</span>
+                                        <span id="date-error" class="error-message" role="alert"></span>
                                     </div>
 
                                     <div class="form-group">
