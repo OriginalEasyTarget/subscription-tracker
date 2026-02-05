@@ -557,7 +557,6 @@ th {
     font-weight: 600;
     color: var(--gray-800);
     font-size: var(--font-size-sm);
-    text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
@@ -588,9 +587,14 @@ th:nth-child(6) {
 th:nth-child(7) {
     width: 8%;
 }
-
 th:nth-child(8) {
     width: 8%;
+}
+
+.sort-indicator {
+    font-size: 0.8em;
+    margin-left: 0.25em;
+    opacity: 0.8;
 }
 
 td {
@@ -1012,6 +1016,47 @@ input[type="checkbox"]:focus {
 .delete-btn {
     display: block;
     margin: 0 auto;
+}
+
+/* ===================================
+   Autocomplete/Combobox Styling
+   =================================== */
+.autocomplete-dropdown-container {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.autocomplete-dropdown {
+    position: fixed;
+    display: none;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    background-color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.autocomplete-option {
+    padding: var(--spacing-md);
+    cursor: pointer;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background-color 0.15s;
+}
+
+.autocomplete-option:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-option:hover,
+.autocomplete-option.highlighted {
+    background-color: var(--primary-light);
+    color: var(--gray-900);
 }
 
 .notes-btn {

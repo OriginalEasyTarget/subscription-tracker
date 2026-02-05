@@ -1,4 +1,207 @@
 // ===================================
+// Autocomplete/Combobox Component
+// ===================================
+
+class Autocomplete {
+    constructor(inputElement, options = []) {
+        this.inputElement = inputElement;
+        this.options = options;
+        this.filteredOptions = [];
+        this.highlightedIndex = -1;
+        this.isOpen = false;
+
+        // Create dropdown container (wrapper around input)
+        this.dropdownContainer = document.createElement('div');
+        this.dropdownContainer.className = 'autocomplete-dropdown-container';
+        this.dropdownContainer.style.position = 'relative';
+        this.dropdownContainer.style.display = 'inline-block';
+        this.dropdownContainer.style.width = '100%';
+
+        // Create dropdown list with fixed positioning
+        this.dropdown = document.createElement('ul');
+        this.dropdown.className = 'autocomplete-dropdown';
+        this.dropdown.setAttribute('role', 'listbox');
+        this.dropdown.setAttribute('aria-label', 'Suggestions');
+
+        // Insert container into DOM
+        this.inputElement.parentNode.insertBefore(this.dropdownContainer, this.inputElement);
+        this.dropdownContainer.appendChild(this.inputElement);
+        
+        // Append dropdown to body for fixed positioning
+        document.body.appendChild(this.dropdown);
+
+        // Set up ARIA attributes on input
+        this.inputElement.setAttribute('role', 'combobox');
+        this.inputElement.setAttribute('aria-autocomplete', 'list');
+        this.inputElement.setAttribute('aria-controls', this.dropdown.id || 'autocomplete-dropdown');
+        this.inputElement.setAttribute('aria-expanded', 'false');
+
+        // Event listeners
+        this.inputElement.addEventListener('focus', () => this.handleFocus());
+        this.inputElement.addEventListener('input', () => this.handleInput());
+        this.inputElement.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this.inputElement.addEventListener('blur', () => this.handleBlur());
+        document.addEventListener('click', (e) => this.handleClickOutside(e));
+    }
+
+    setOptions(options) {
+        this.options = options;
+        this.filteredOptions = options;
+    }
+
+    handleFocus() {
+        this.filteredOptions = this.options;
+        this.render();
+        this.open();
+    }
+
+    handleInput() {
+        const value = this.inputElement.value.toLowerCase().trim();
+        
+        // Filter options
+        if (value) {
+            this.filteredOptions = this.options.filter(opt =>
+                opt.toLowerCase().includes(value)
+            );
+        } else {
+            this.filteredOptions = this.options;
+        }
+
+        this.highlightedIndex = -1;
+        
+        if (this.filteredOptions.length > 0) {
+            this.render();
+            this.open();
+        } else {
+            this.close();
+        }
+    }
+
+    handleKeydown(e) {
+        if (!this.isOpen) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.handleFocus();
+            }
+            return;
+        }
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                this.highlightedIndex = Math.min(
+                    this.highlightedIndex + 1,
+                    this.filteredOptions.length - 1
+                );
+                this.render();
+                this.updateAriaActivedescendant();
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                this.highlightedIndex = Math.max(this.highlightedIndex - 1, -1);
+                this.render();
+                this.updateAriaActivedescendant();
+                break;
+
+            case 'Enter':
+                e.preventDefault();
+                if (this.highlightedIndex >= 0) {
+                    this.selectOption(this.filteredOptions[this.highlightedIndex]);
+                }
+                this.close();
+                break;
+
+            case 'Escape':
+                e.preventDefault();
+                this.close();
+                break;
+        }
+    }
+
+    handleBlur() {
+        // Delay closing to allow click events on options to fire
+        setTimeout(() => this.close(), 150);
+    }
+
+    handleClickOutside(e) {
+        if (!this.dropdownContainer.contains(e.target)) {
+            this.close();
+        }
+    }
+
+    selectOption(option) {
+        this.inputElement.value = option;
+        this.highlightedIndex = -1;
+    }
+
+    render() {
+        this.dropdown.innerHTML = '';
+
+        if (this.filteredOptions.length === 0) {
+            this.close();
+            return;
+        }
+
+        this.filteredOptions.forEach((option, index) => {
+            const li = document.createElement('li');
+            li.className = 'autocomplete-option';
+            li.setAttribute('role', 'option');
+            li.textContent = option;
+
+            if (index === this.highlightedIndex) {
+                li.classList.add('highlighted');
+                li.setAttribute('aria-selected', 'true');
+            } else {
+                li.setAttribute('aria-selected', 'false');
+            }
+
+            li.addEventListener('click', () => {
+                this.selectOption(option);
+                this.close();
+            });
+
+            this.dropdown.appendChild(li);
+        });
+    }
+
+    updateAriaActivedescendant() {
+        if (this.highlightedIndex >= 0) {
+            const activeOption = this.dropdown.querySelector('.highlighted');
+            if (activeOption) {
+                this.inputElement.setAttribute(
+                    'aria-activedescendant',
+                    activeOption.id || `option-${this.highlightedIndex}`
+                );
+            }
+        } else {
+            this.inputElement.removeAttribute('aria-activedescendant');
+        }
+    }
+
+    open() {
+        this.isOpen = true;
+        
+        // Position dropdown below the input
+        const rect = this.inputElement.getBoundingClientRect();
+        this.dropdown.style.position = 'fixed';
+        this.dropdown.style.top = (rect.bottom + 4) + 'px';
+        this.dropdown.style.left = rect.left + 'px';
+        this.dropdown.style.width = rect.width + 'px';
+        
+        this.dropdown.style.display = 'block';
+        this.inputElement.setAttribute('aria-expanded', 'true');
+    }
+
+    close() {
+        this.isOpen = false;
+        this.dropdown.style.display = 'none';
+        this.inputElement.setAttribute('aria-expanded', 'false');
+        this.highlightedIndex = -1;
+    }
+}
+
+// ===================================
 // Subscription Tracker App
 // ===================================
 
@@ -20,15 +223,20 @@ class SubscriptionTracker {
         const form = document.getElementById('subscriptionForm');
         form.addEventListener('submit', (e) => this.handleFormSubmit(e));
 
-        // Initialize category autocomplete
-        this.updateCategoryAutocomplete();
-        
-        // Add Enter key listener for autocomplete selection
-        const categoryInput = document.getElementById('category');
-        categoryInput.addEventListener('keydown', (e) => this.handleAutocompleteKeydown(e, 'categories'));
-        
+        // Initialize frequency autocomplete
         const frequencyInput = document.getElementById('frequency');
-        frequencyInput.addEventListener('keydown', (e) => this.handleAutocompleteKeydown(e, 'frequencies'));
+        this.frequencyAutocomplete = new Autocomplete(frequencyInput, [
+            'Weekly',
+            'Monthly',
+            'Quarterly',
+            'Semi-Annually',
+            'Annually'
+        ]);
+
+        // Initialize category autocomplete
+        const categoryInput = document.getElementById('category');
+        this.categoryAutocomplete = new Autocomplete(categoryInput, []);
+        this.updateCategoryAutocomplete();
 
         // Set up date input auto-advance
         this.setupDateInputAutoAdvance();
@@ -277,68 +485,17 @@ class SubscriptionTracker {
             }
         });
 
-        const datalist = document.getElementById('categories');
-        // Only update if categories have changed
-        const currentOptions = Array.from(datalist.querySelectorAll('option')).map(opt => opt.value);
         const newCategories = Array.from(categories).sort();
         
-        if (JSON.stringify(currentOptions) !== JSON.stringify(newCategories)) {
-            datalist.innerHTML = '';
-            newCategories.forEach((category) => {
-                const option = document.createElement('option');
-                option.value = category;
-                datalist.appendChild(option);
-            });
+        // Update the category autocomplete component
+        if (this.categoryAutocomplete) {
+            this.categoryAutocomplete.setOptions(newCategories);
         }
     }
 
     // ===================================
     // Autocomplete Handling
     // ===================================
-
-    handleAutocompleteKeydown(e, datalistId) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const input = e.target;
-            const currentValue = input.value.toLowerCase().trim();
-            const datalist = document.getElementById(datalistId);
-            
-            console.log(`Autocomplete triggered for ${datalistId}: "${currentValue}"`);
-            
-            // Find matching options
-            const options = Array.from(datalist.querySelectorAll('option'));
-            console.log(`Available options:`, options.map(o => o.value));
-            
-            let matchedOption = null;
-            
-            // First, try exact match (case-insensitive)
-            matchedOption = options.find(opt => 
-                opt.value.toLowerCase() === currentValue
-            );
-            
-            // If no exact match, find first option that starts with the input
-            if (!matchedOption && currentValue) {
-                matchedOption = options.find(opt => 
-                    opt.value.toLowerCase().startsWith(currentValue)
-                );
-            }
-            
-            // If still no match, select first option
-            if (!matchedOption && options.length > 0) {
-                matchedOption = options[0];
-            }
-            
-            // Set the input value to the matched option
-            if (matchedOption) {
-                console.log(`Matched option:`, matchedOption.value);
-                input.value = matchedOption.value;
-            }
-            
-            // Submit the form
-            const form = document.getElementById('subscriptionForm');
-            form.dispatchEvent(new Event('submit'));
-        }
-    }
 
     // ===================================
     // Form Handling
@@ -729,7 +886,10 @@ class SubscriptionTracker {
                 // Add visual indicator for current sort
                 if (this.sortColumn === column) {
                     const indicator = this.sortAscending ? ' ▲' : ' ▼';
-                    header.textContent += indicator;
+                    const span = document.createElement('span');
+                    span.className = 'sort-indicator';
+                    span.textContent = indicator;
+                    header.appendChild(span);
                 }
             }
         });
@@ -878,21 +1038,55 @@ class SubscriptionTracker {
 
     makeEditable(cell, fieldName, fieldType, currentValue, subscriptionId) {
         const originalContent = cell.innerHTML;
+        cell.innerHTML = '';
 
         let inputElement;
+        let autocompleteInstance = null;
 
         if (fieldType === 'select') {
-            // For frequency field, create a simple text input
-            // The user can type or the browser will show the static datalist from HTML
+            // For frequency field, use Autocomplete component
             inputElement = document.createElement('input');
             inputElement.type = 'text';
+            inputElement.className = 'edit-input';
             // Display the formatted (title case) version to the user
             inputElement.value = this.formatFrequency(currentValue) || '';
-            inputElement.setAttribute('list', 'frequencies');
+            
+            // Add to cell first, then create autocomplete
+            cell.appendChild(inputElement);
+            
+            // Create autocomplete for frequency
+            const frequencyOptions = [
+                'Weekly',
+                'Monthly',
+                'Quarterly',
+                'Semi-Annually',
+                'Annually'
+            ];
+            autocompleteInstance = new Autocomplete(inputElement, frequencyOptions);
+        } else if (fieldName === 'category') {
+            // For category field, use Autocomplete component
+            inputElement = document.createElement('input');
+            inputElement.type = 'text';
+            inputElement.className = 'edit-input';
+            inputElement.value = currentValue || '';
+            
+            // Add to cell first, then create autocomplete
+            cell.appendChild(inputElement);
+            
+            // Get current categories from subscriptions
+            const categories = new Set();
+            this.subscriptions.forEach((sub) => {
+                if (sub.category && sub.category.trim()) {
+                    categories.add(sub.category);
+                }
+            });
+            const categoryOptions = Array.from(categories).sort();
+            autocompleteInstance = new Autocomplete(inputElement, categoryOptions);
         } else if (fieldType === 'date') {
             // Use masked date input like the form (MM/DD/YYYY format)
             inputElement = document.createElement('input');
             inputElement.type = 'text';
+            inputElement.className = 'edit-input';
             inputElement.inputMode = 'numeric';
             inputElement.placeholder = 'MM/DD/YYYY';
             // Convert stored date format (YYYY-MM-DD) to display format (MM/DD/YYYY)
@@ -902,19 +1096,22 @@ class SubscriptionTracker {
                     inputElement.value = `${parts[1]}/${parts[2]}/${parts[0]}`;
                 }
             }
+            cell.appendChild(inputElement);
         } else if (fieldType === 'number') {
             inputElement = document.createElement('input');
             inputElement.type = 'number';
+            inputElement.className = 'edit-input';
             inputElement.step = '0.01';
             inputElement.min = '0';
             inputElement.value = currentValue || '';
+            cell.appendChild(inputElement);
         } else {
             inputElement = document.createElement('input');
             inputElement.type = 'text';
+            inputElement.className = 'edit-input';
             inputElement.value = currentValue || '';
+            cell.appendChild(inputElement);
         }
-
-        inputElement.className = 'edit-input';
 
         const finishEdit = () => {
             const newValue = inputElement.value.trim();
@@ -948,19 +1145,30 @@ class SubscriptionTracker {
             cell.innerHTML = originalContent;
         };
 
-        inputElement.addEventListener('blur', finishEdit);
+        // For autocomplete fields, add blur listener after autocomplete is created
+        if (autocompleteInstance) {
+            inputElement.addEventListener('blur', () => {
+                // Delay to allow autocomplete selection to complete
+                setTimeout(() => finishEdit(), 200);
+            });
+        } else {
+            inputElement.addEventListener('blur', finishEdit);
+        }
+        
         inputElement.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 finishEdit();
             } else if (e.key === 'Escape') {
+                e.preventDefault();
                 cancelEdit();
             }
         });
 
-        cell.innerHTML = '';
-        cell.appendChild(inputElement);
         inputElement.focus();
-        inputElement.select();
+        if (inputElement.select) {
+            inputElement.select();
+        }
     }
 
     updateFieldValue(subscriptionId, fieldName, newValue, fieldType) {

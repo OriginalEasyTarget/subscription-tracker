@@ -95,17 +95,9 @@
                                             id="frequency" 
                                             name="frequency" 
                                             placeholder="Select frequency"
-                                            list="frequencies"
                                             required
                                             aria-required="true"
                                         >
-                                        <datalist id="frequencies">
-                                            <option value="Weekly"></option>
-                                            <option value="Monthly"></option>
-                                            <option value="Quarterly"></option>
-                                            <option value="Semi-Annually"></option>
-                                            <option value="Annually"></option>
-                                        </datalist>
                                         <span class="error-message" id="frequency-error" role="alert"></span>
                                     </div>
 
@@ -116,9 +108,7 @@
                                             id="category" 
                                             name="category" 
                                             placeholder="e.g., Entertainment"
-                                            list="categories"
                                         >
-                                        <datalist id="categories"></datalist>
                                     </div>
 
                                     <div class="form-group">
@@ -137,7 +127,7 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="notes">Notes</label>
+                                        <label for="notes">Note</label>
                                         <textarea 
                                             id="notes" 
                                             name="notes" 
@@ -220,7 +210,7 @@
                                 <th scope="col">Freq</th>
                                 <th scope="col">Category</th>
                                 <th scope="col">Next Bill</th>
-                                <th scope="col">Notes</th>
+                                <th scope="col">Note</th>
                                 <th scope="col">Flag</th>
                                 <th scope="col">Delete</th>
                             </tr>
